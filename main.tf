@@ -77,10 +77,12 @@ resource "aws_cloudformation_stack" "nac_stack" {
 
 ########################################## Internal Secret  ########################################################
 data "aws_secretsmanager_secret" "admin_secret" {
+  count       = var.service_name=="EXP" ? 0 : 1
   name = var.admin_secret
 }
 data "aws_secretsmanager_secret_version" "admin_secret" {
-  secret_id = data.aws_secretsmanager_secret.admin_secret.id
+  count       = var.service_name=="EXP" ? 0 : 1
+  secret_id = data.aws_secretsmanager_secret.admin_secret.0.id
 }
 
 resource "aws_secretsmanager_secret" "internal_secret_u" {
@@ -91,7 +93,7 @@ resource "aws_secretsmanager_secret_version" "internal_secret_u" {
   secret_id     = aws_secretsmanager_secret.internal_secret_u.id
   secret_string = jsonencode(local.secret_data_to_update)
   depends_on = [
-    aws_iam_role.nac_exec_role,
+    aws_iam_role.nac_exec_role,aws_secretsmanager_secret.internal_secret_u
   ]
 }
 

@@ -92,7 +92,12 @@ variable "VolumeKeyParameter" {
 variable "VolumeKeyPassphrase" {
   default = ""
 }
-
+variable "service_name" {
+  default = ""
+}
+variable "frequency" {
+  default = ""
+}
 variable "user_secret" {
   default = "prod/nac/admin"
 }
@@ -196,4 +201,19 @@ variable "SourceBucket" {
 
 variable "github_organization" {
   default = "nasuni-labs"
+}
+variable "nac_es_securitygroup_id" {
+  default = ""
+}
+variable "git_branch" {
+  default = "main"
+}
+variable "user_subnet_id" {
+  default = ""
+}
+variable "nac_scheduler_name" {
+  default = ""
+}
+variable "user_vpc_id" {
+  default = ""
 }
