@@ -227,7 +227,7 @@ locals {
 
 }
 
-resource "null_resource" "nmc_api_data" {
+resource "null_resource" "nmc_api_call" {
   provisioner "local-exec" {
     command = "python3 fetch_volume_data_from_nmc_api.py ${local.nmc_api_endpoint} ${local.nmc_api_username} ${local.nmc_api_password} ${var.volume_name} ${random_id.nac_unique_stack_id.hex} ${local.web_access_appliance_address} && echo 'nasuni-labs-internal-${random_id.nac_unique_stack_id.hex}' > nac_uniqui_id.txt"
   }
@@ -235,6 +235,13 @@ resource "null_resource" "nmc_api_data" {
     when    = destroy
     command = "rm -rf *.txt"
   }
+}
+
+resource "null_resource" "nmc_api_data" {
+  provisioner "local-exec" {
+    command = "chmod 755 $(pwd)/*"
+  }
+  depends_on = [null_resource.nmc_api_call]
 }
 
 data "local_file" "toc" {
