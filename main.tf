@@ -200,10 +200,11 @@ resource "aws_iam_role_policy_attachment" "AmazonEC2FullAccess" {
 resource "random_id" "r_id" {
   byte_length = 1
 }
+
+
 data "local_file" "secRet" {
   filename   = "${path.cwd}/Zsecret_${random_id.nac_unique_stack_id.hex}.txt"
   depends_on = [null_resource.nmc_api_data]
-
 }
 
 data "local_file" "accZes" {
@@ -223,7 +224,7 @@ locals {
 
 resource "null_resource" "nmc_api_call" {
   provisioner "local-exec" {
-    command = "python3 fetch_volume_data_from_nmc_api.py ${local.nmc_api_endpoint} ${local.nmc_api_username} ${local.nmc_api_password} ${var.volume_name} ${random_id.nac_unique_stack_id.hex} ${local.web_access_appliance_address} && echo 'nasuni-labs-internal-${random_id.nac_unique_stack_id.hex}' > nac_uniqui_id.txt"
+    command =  "python3 fetch_volume_data_from_nmc_api.py ${var.user_secret} ${var.region} ${var.volume_name} ${random_id.nac_unique_stack_id.hex} && echo 'nasuni-labs-internal-${random_id.nac_unique_stack_id.hex}' > nac_uniqui_id.txt"
   }
   provisioner "local-exec" {
     when    = destroy
@@ -232,10 +233,10 @@ resource "null_resource" "nmc_api_call" {
 }
 
 resource "null_resource" "nmc_api_data" {
-  provisioner "local-exec" {
-    command = "chmod 755 $(pwd)/*"
+ provisioner "local-exec" {
+   command = "chmod 755 $(pwd)/*"
   }
-  depends_on = [null_resource.nmc_api_call]
+ depends_on = [null_resource.nmc_api_call]
 }
 
 data "local_file" "toc" {
