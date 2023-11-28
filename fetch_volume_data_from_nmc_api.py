@@ -14,27 +14,18 @@ import requests
 import base64
 from botocore.exceptions import ClientError
 
-# if len(sys.argv) < 6:
-#     print(
-#         'Usage -- python3 fetch_volume_data_from_nmc_api.py <file_name> <secret_name> <region> <volume_name> <rid> ')
-#     exit()
-
 logging.getLogger().setLevel(logging.INFO)
 logging.info(f'date={date}')
 
 if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
     ssl._create_default_https_context = ssl._create_unverified_context
 
-
-# file_name, secret_name, region, volume_name,rid = [
-    # "fetch_nmc_api_23-8.py", "prod/nac/admin/es-vol-pub-2/EXP", "us-east-2", "es-vol-pub-1", "123"]
-
-secret_name, region, volume_name,rid = sys.argv
+file_name,secret_name, region, volume_name,rid = sys.argv
 
 def get_secret(secret_name, region_name):
 
     secret = ''
-    session = boto3.session.Session()
+    session = boto3.session.Session(profile_name="nasuni")
     client = session.client(
         service_name='secretsmanager',
         region_name=region_name,
@@ -44,7 +35,7 @@ def get_secret(secret_name, region_name):
         get_secret_value_response = client.get_secret_value(
             SecretId=secret_name
         )
-
+   
     except ClientError as e:
         if e.response['Error']['Code'] == 'ResourceNotFoundException':
             print("The requested secret " + secret_name + " was not found")
@@ -67,7 +58,8 @@ def get_secret(secret_name, region_name):
             secret = base64.b64decode(
                 get_secret_value_response['SecretBinary'])
 
-    return json.loads(secret)
+    secret=json.loads(secret)
+    return secret
 
 
 secret = get_secret(secret_name, region)
