@@ -61,7 +61,7 @@ resource "random_id" "nac_unique_stack_id" {
 resource "aws_cloudformation_stack" "nac_stack" {
   count = module.this.enabled ? 1 : 0
 
-  name         = "nasuni-labs-AnalyticsConnector-${random_id.nac_unique_stack_id.hex}"
+  name         = "nasuni-labs-AnalyticsConnector-${var.RndIN}"
   tags         = module.this.tags
   template_url = local.template_url
   parameters         = local.prams
@@ -78,7 +78,7 @@ resource "aws_cloudformation_stack" "nac_stack" {
 ########################################## Internal Secret  ########################################################
 
 resource "aws_secretsmanager_secret" "internal_secret_u" {
-  name        = "nasuni-labs-internal-${random_id.nac_unique_stack_id.hex}"
+  name        = "nasuni-labs-internal-${var.RndIN}"
   description = "Nasuni Analytics Connector's version specific internal secret. This will be created as well as destroyed along with NAC."
 }
 resource "aws_secretsmanager_secret_version" "internal_secret_u" {
@@ -94,7 +94,7 @@ locals {
   secret_data_to_update = {
     root_handle                  = data.local_file.toc.content
     discovery_source_bucket      = jsondecode(nonsensitive(data.aws_secretsmanager_secret_version.current_user_secrets.secret_string))["destination_bucket"]
-    nac_stack                    = "nasuni-labs-NasuniAnalyticsConnector-${random_id.nac_unique_stack_id.hex}"
+    nac_stack                    = "nasuni-labs-NasuniAnalyticsConnector-${var.RndIN}"
     aws_region                   = var.region
     user_secret_name             = var.user_secret
     volume_name                  = var.volume_name
@@ -105,7 +105,7 @@ locals {
 
 ############## IAM policy for accessing S3 from a lambda ######################
 resource "aws_iam_policy" "s3_GetObject_access" {
-  name        = "${local.resource_name_prefix}-ExportOnly_s3_GetObject_access_policy-${random_id.nac_unique_stack_id.hex}"
+  name        = "${local.resource_name_prefix}-ExportOnly_s3_GetObject_access_policy-${var.RndIN}"
   path        = "/"
   description = "IAM policy for accessing S3 from a lambda"
 
@@ -124,7 +124,7 @@ resource "aws_iam_policy" "s3_GetObject_access" {
 }
 EOF
   tags = {
-    Name            = "${local.resource_name_prefix}-ExportOnly_s3_GetObject_access_policy-${random_id.nac_unique_stack_id.hex}"
+    Name            = "${local.resource_name_prefix}-ExportOnly_s3_GetObject_access_policy-${var.RndIN}"
     Application     = "Nasuni Analytics Connector with ExportOnly"
     Developer       = "Nasuni"
     PublicationType = "Nasuni Labs"
@@ -135,7 +135,7 @@ EOF
 
 
 resource "aws_iam_role" "nac_exec_role" {
-  name        = "${local.resource_name_prefix}-nac_exec_role-${random_id.nac_unique_stack_id.hex}"
+  name        = "${local.resource_name_prefix}-nac_exec_role-${var.RndIN}"
   path        = "/"
   description = "Allows NAC to call AWS services on your behalf."
 
@@ -155,7 +155,7 @@ resource "aws_iam_role" "nac_exec_role" {
 EOF
 
   tags = {
-    Name            = "${local.resource_name_prefix}-nac_exec_role-${random_id.nac_unique_stack_id.hex}"
+    Name            = "${local.resource_name_prefix}-nac_exec_role-${var.RndIN}"
     Application     = "Nasuni Analytics Connector with ExportOnly"
     Developer       = "Nasuni"
     PublicationType = "Nasuni Labs"
@@ -197,18 +197,18 @@ resource "aws_iam_role_policy_attachment" "AmazonEC2FullAccess" {
 }
 
 ################################################# END LAMBDA########################################################
-resource "random_id" "r_id" {
-  byte_length = 1
-}
+# resource "random_id" "r_id" {
+#   byte_length = 1
+# }RndIN
 
 
 data "local_file" "secRet" {
-  filename   = "${path.cwd}/Zsecret_${random_id.nac_unique_stack_id.hex}.txt"
+  filename   = "${path.cwd}/Zsecret_${var.RndIN}.txt"
   depends_on = [null_resource.nmc_api_data]
 }
 
 data "local_file" "accZes" {
-  filename   = "${path.cwd}/Zaccess_${random_id.nac_unique_stack_id.hex}.txt"
+  filename   = "${path.cwd}/Zaccess_${var.RndIN}.txt"
   depends_on = [null_resource.nmc_api_data]
 }
 
@@ -222,25 +222,19 @@ locals {
 
 }
 
-resource "null_resource" "nmc_api_call" {
-  provisioner "local-exec" {
-    command =  "python3 fetch_volume_data_from_nmc_api.py ${var.user_secret} ${var.region} ${var.volume_name} ${random_id.nac_unique_stack_id.hex} && echo 'nasuni-labs-internal-${random_id.nac_unique_stack_id.hex}' > nac_uniqui_id.txt"
-  }
-  provisioner "local-exec" {
-    when    = destroy
-    command = "rm -rf *.txt"
-  }
-}
 
 resource "null_resource" "nmc_api_data" {
  provisioner "local-exec" {
    command = "chmod 755 $(pwd)/*"
   }
- depends_on = [null_resource.nmc_api_call]
+   provisioner "local-exec" {
+    when    = destroy
+    command = "rm -rf *.txt"
+  }
 }
 
 data "local_file" "toc" {
-  filename   = "${path.cwd}/nmc_api_data_root_handle_${random_id.nac_unique_stack_id.hex}.txt"
+  filename   = "${path.cwd}/nmc_api_data_root_handle_${var.RndIN}.txt"
   depends_on = [null_resource.nmc_api_data]
 }
 
@@ -251,7 +245,7 @@ output "root_handle" {
 }
 
 data "local_file" "bkt" {
-  filename   = "${path.cwd}/nmc_api_data_source_bucket_${random_id.nac_unique_stack_id.hex}.txt"
+  filename   = "${path.cwd}/nmc_api_data_source_bucket_${var.RndIN}.txt"
   depends_on = [null_resource.nmc_api_data]
 }
 
@@ -267,7 +261,7 @@ output "source_bucket" {
 }
 
 data "local_file" "v_guid" {
-  filename   = "${path.cwd}/nmc_api_data_v_guid_${random_id.nac_unique_stack_id.hex}.txt"
+  filename   = "${path.cwd}/nmc_api_data_v_guid_${var.RndIN}.txt"
   depends_on = [null_resource.nmc_api_data]
 }
 
@@ -279,7 +273,7 @@ output "volume_guid" {
 
 
 data "local_file" "appliance_address" {
-  filename   = "${path.cwd}/nmc_api_data_external_share_url_${random_id.nac_unique_stack_id.hex}.txt"
+  filename   = "${path.cwd}/nmc_api_data_external_share_url_${var.RndIN}.txt"
   depends_on = [null_resource.nmc_api_data]
 }
 

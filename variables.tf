@@ -217,3 +217,6 @@ variable "nac_scheduler_name" {
 variable "user_vpc_id" {
   default = ""
 }
+variable "RndIN" {
+  default = ""
+}
